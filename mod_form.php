@@ -39,19 +39,22 @@ require_once($CFG->dirroot.'/mod/zoom/locallib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_zoom_mod_form extends moodleform_mod {
+    private $zoomuser;
 
     /**
      * Defines forms elements
      */
     public function definition() {
         global $USER;
-        $service = new mod_zoom_webservice();
-        if (!$service->user_getbyemail($USER->email)) {
-            zoom_print_error('user/getbyemail', $service->lasterror);
+        if (!isset($this->zoomuser)) {
+            $service = new mod_zoom_webservice();
+            if (!$service->user_getbyemail($USER->email)) {
+                zoom_print_error('user/getbyemail', $service->lasterror);
+            }
+            $this->zoomuser = $service->lastresponse;
         }
-        $zoomuser = $service->lastresponse;
 
-        $mform = $this->_form;
+        $mform = &$this->_form;
 
         // Adding the "general" fieldset, where all the common settings are showed.
         $mform->addElement('header', 'general', get_string('general', 'form'));
@@ -83,20 +86,26 @@ class mod_zoom_mod_form extends moodleform_mod {
         $mform->addHelpButton('recurring', 'recurringmeeting', 'zoom');
 
         // Add webinar, disabled if the user cannot create webinars.
-        $webinarattr = null;
-        if (!$zoomuser->enable_webinar) {
-            $webinarattr = array('disabled' => true, 'group' => null);
+        // Slightly hacky: use regular checkbox when we want to set disabled attribute, since
+        // advcheckbox has an additional hidden element that wouldn't get disabled.
+        // Have webinar be a hidden element that is actually submitted with the form; the
+        // webinar_display checkbox does not get submitted since it is disabled.
+        if (!$this->zoomuser->enable_webinar) {
+            $mform->addElement('checkbox', 'webinar_display', get_string('webinar', 'zoom'), '',
+                array('disabled' => 'disabled'));
+            $mform->addElement('hidden', 'webinar', 0);
+            $mform->setType('webinar', PARAM_BOOL);
+        } else {
+            $mform->addElement('advcheckbox', 'webinar', get_string('webinar', 'zoom'));
+            $mform->setDefault('webinar', 0);
         }
-        $mform->addElement('advcheckbox', 'webinar', get_string('webinar', 'zoom'), '', $webinarattr);
-        $mform->setDefault('webinar', 0);
-        $mform->addHelpButton('webinar', 'webinar', 'zoom');
 
         // Add password.
         $mform->addElement('passwordunmask', 'password', get_string('password', 'zoom'), array('maxlength' => '10'));
         // Check password uses valid characters.
         $regex = '/^[a-zA-Z0-9@_*-]{1,10}$/';
         $mform->addRule('password', get_string('err_password', 'mod_zoom'), 'regex', $regex, 'client');
-        $mform->disabledIf('password', 'webinar', 'checked');
+        $mform->disabledIf('password', 'webinar', 'eq', 1);
 
         // Add host/participants video (checked by default).
         $mform->addGroup(array(
@@ -104,14 +113,14 @@ class mod_zoom_mod_form extends moodleform_mod {
             $mform->createElement('radio', 'option_host_video', '', get_string('off', 'zoom'), false)
         ), null, get_string('option_host_video', 'zoom'));
         $mform->setDefault('option_host_video', true);
-        $mform->disabledIf('option_host_video', 'webinar', 'checked');
+        $mform->disabledIf('option_host_video', 'webinar', 'eq', 1);
 
         $mform->addGroup(array(
             $mform->createElement('radio', 'option_participants_video', '', get_string('on', 'zoom'), true),
             $mform->createElement('radio', 'option_participants_video', '', get_string('off', 'zoom'), false)
         ), null, get_string('option_participants_video', 'zoom'));
         $mform->setDefault('option_participants_video', true);
-        $mform->disabledIf('option_participants_video', 'webinar', 'checked');
+        $mform->disabledIf('option_participants_video', 'webinar', 'eq', 1);
 
         // Add audio options.
         $mform->addGroup(array(
@@ -128,7 +137,7 @@ class mod_zoom_mod_form extends moodleform_mod {
             $mform->createElement('advcheckbox', 'option_jbh', '', get_string('option_jbh', 'zoom'))
         ), 'meetingoptions', get_string('meetingoptions', 'zoom'), null, false);
         $mform->addHelpButton('meetingoptions', 'meetingoptions', 'zoom');
-        $mform->disabledIf('meetingoptions', 'webinar', 'checked');
+        $mform->disabledIf('meetingoptions', 'webinar', 'eq', 1);
 
         // Add meeting id.
         $mform->addElement('hidden', 'meeting_id', -1);
@@ -147,6 +156,17 @@ class mod_zoom_mod_form extends moodleform_mod {
 
         // Add standard buttons, common to all modules.
         $this->add_action_buttons();
+    }
+
+    /**
+     * Called after form data has been loaded from database.
+     */
+    public function definition_after_data() {
+        if (!$this->zoomuser->enable_webinar) {
+            $mform = &$this->_form;
+            $webinar = $mform->getElement('webinar')->getValue();
+            $mform->getElement('webinar_display')->setValue($webinar);
+        }
     }
 
     /**
