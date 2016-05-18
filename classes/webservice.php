@@ -269,6 +269,28 @@ class mod_zoom_webservice {
 
         return true;
     }
+    
+    /**
+     * Get a recording's information from Zoom.
+     * Interpret $zoom the same way as meeting_create().
+     *
+     * @param object $zoom
+     * @return bool Success/Failure
+     */
+    public function list_recording_info($zoom) {
+      $url = 'recording/list';
+      $data = array('id' => $zoom->meeting_id, 'host_id' => $zoom->host_id);
+    
+      try {
+        $this->make_call($url, $data);
+      } catch (moodle_exception $e) {
+        return false;
+      }
+    
+      $this->format_meeting_response($zoom);
+    
+      return true;
+    }
 
     // Reporting API calls
     // --------------------------------------------------------------------------
@@ -427,6 +449,8 @@ class mod_zoom_webservice {
         $response->start_time = strtotime($response->start_time);
         // Strip any parameters if provided in REST response for join_url.
         $response->join_url = preg_replace('/\?.*$/', '', $response->join_url);
+        // Strip any parameters if provided in REST response for play_url.
+        $response->play_url = preg_replace('/\?.*$/', '', $response->play_url);
         // Database uses 'meeting_id' but API uses 'id'.
         $response->meeting_id = $response->id;
         if (isset($zoom->instance)) {

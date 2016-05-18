@@ -90,6 +90,7 @@ $string['password'] = 'Password';
 $string['passwordprotected'] = 'Password Protected';
 $string['pluginadministration'] = 'Manage Zoom meeting';
 $string['pluginname'] = 'Zoom meeting';
+$string['recording_link'] = 'Recording link';
 $string['recurringmeeting'] = 'Recurring';
 $string['recurringmeeting_help'] = 'Has no end date';
 $string['recurringmeetinglong'] = 'Recurring meeting (meeting with no end date or time)';

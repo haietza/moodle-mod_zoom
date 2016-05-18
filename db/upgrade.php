@@ -155,6 +155,17 @@ function xmldb_zoom_upgrade($oldversion) {
         // Zoom savepoint reached.
         upgrade_mod_savepoint(true, 2016040100, 'zoom');
     }
+    
+    if ($oldversion < 2016050100) {
+      // Add play_url.
+      $field = new xmldb_field('play_url', XMLDB_TYPE_TEXT, null, null, null, null, null, null);
+      if (!$dbman->field_exists($table, $field)) {
+        $dbman->add_field($table, $field);
+      }   
+    
+      // Zoom savepoint reached.
+      upgrade_mod_savepoint(true, 2016050100, 'zoom');
+    }
 
     return true;
 }

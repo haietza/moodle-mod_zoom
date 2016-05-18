@@ -78,6 +78,7 @@ $strpassprotect = get_string('passwordprotected', 'mod_zoom');
 $strpassword = get_string('password', 'mod_zoom');
 $strjoinlink = get_string('join_link', 'mod_zoom');
 $strjoinbeforehost = get_string('joinbeforehost', 'mod_zoom');
+$strrecordinglink = get_string('recording_link', 'mod_zoom');
 $strstartvideohost = get_string('starthostjoins', 'mod_zoom');
 $strstartvideopart = get_string('startpartjoins', 'mod_zoom');
 $straudioopt = get_string('option_audio', 'mod_zoom');
@@ -175,6 +176,10 @@ if (!$zoom->recurring) {
     }
 
     $table->data[] = array($strstatus, $status);
+}
+
+if ($finished && $zoom->play_url != null) {
+  $table->data[] = array($strrecordinglink, html_writer::link($zoom->play_url, $zoom->play_url));
 }
 
 $urlall = new moodle_url('/mod/zoom/index.php', array('id' => $course->id));

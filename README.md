@@ -16,6 +16,10 @@ Must set the following settings to enable the plugin:
 
 ## Changelog
 
+v1.4
+* Fixed deprecated use of add_intro_editor().
+* Added cloud recording link to view page.
+
 v1.3
 * Fixed join before host option.
 * Added Zoom user reports.

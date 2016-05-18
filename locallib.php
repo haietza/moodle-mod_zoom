@@ -243,6 +243,12 @@ function zoom_update_records(Traversable $zooms) {
             if ($z->name != $service->lastresponse->name) {
                 $coursestoupdate[$z->course] = 1;
             }
+            if ($service->list_recording_info($z)) {
+                $z->play_url = $service->lastresponse->play_url;
+                
+                // Save in database.
+                $DB->update_record('zoom', $z); 
+            }
         } else {
             $z->status = ZOOM_MEETING_EXPIRED;
             $DB->update_record('zoom', $z);
